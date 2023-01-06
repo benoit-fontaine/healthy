@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "748591270569",
+    "project_id": "healthy-b7635",
+    "storage_bucket": "healthy-b7635.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748591270569:android:8e76e76689f345f38777b8",
+        "android_client_info": {
+          "package_name": "fr.benoitfontaine.healthy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "748591270569-d97bg6q6h7tf3iquuv6t082h0dplfrbj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWOz8aN0NhN2Na__DuVGeVpJyQhGMYDjk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "748591270569-d97bg6q6h7tf3iquuv6t082h0dplfrbj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "748591270569-g1379pdgaj5ikqkq0cgkpsa08uf8ontp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "fr.benoitfontaine.healthy"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
