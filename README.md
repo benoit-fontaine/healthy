@@ -1,3 +1,4 @@
+[![Deploy Flutter web to Github Page](https://github.com/benoit-fontaine/healthy/actions/workflows/static.yml/badge.svg)](https://github.com/benoit-fontaine/healthy/actions/workflows/static.yml)
 # healthy
 
 A new Flutter project.
