@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Healthy: Macro-nutriments'),
     );
   }
 }
@@ -48,17 +49,45 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  int _taille = 0;
+  double _poids = 0;
+  int _age = 0;
+  double _activite = 0;
+  bool _homme = true;
+  double _deficit = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  final _varsHomme = [13.707, 492.3, 6.673, 77.607];
+  final _varsFemme = [9.74, 172.9, 4.7373, 667.051];
+
+  String? _errorTaille;
+  String? _errorPoids;
+  String? _errorAge;
+
+  double kcalByActivity() {
+    if (_activite < 2) return 1.375;
+    if (_activite < 4) return 1.56;
+    if (_activite < 7) return 1.64;
+    return 1.82;
+  }
+
+  double protByActivity() {
+    if (_activite < 2) return 0.8 * _poids;
+    if (_activite < 4) return 1.6 * _poids;
+    return 2 * _poids;
+  }
+
+  double glucides() {
+    return (calcKcal() - (protByActivity() * 4) - (_poids * 9)) / 4;
+  }
+
+  int calcKcal() {
+    double result = 0;
+    var vars = _homme ? _varsHomme : _varsFemme;
+    result += vars[0] * _poids;
+    result += vars[1] * (_taille / 100);
+    result += vars[2] * _age;
+    result += vars[3] * kcalByActivity();
+    return result.round() - _deficit.round();
   }
 
   @override
@@ -75,40 +104,259 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      body: Column(
+        // Column is also a layout widget. It takes a list of children and
+        // arranges them vertically. By default, it sizes itself to fit its
+        // children horizontally, and tries to be as tall as its parent.
+        //
+        // Invoke "debug painting" (press "p" in the console, choose the
+        // "Toggle Debug Paint" action from the Flutter Inspector in Android
+        // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+        // to see the wireframe for each widget.
+        //
+        // Column has various properties to control how it sizes itself and
+        // how it positions its children. Here we use mainAxisAlignment to
+        // center the children vertically; the main axis here is the vertical
+        // axis because Columns are vertical (the cross axis would be
+        // horizontal).
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+            child: TextFormField(
+              decoration: InputDecoration(
+                label: const Text("Taille"),
+                suffix: const Text("cm"),
+                errorText: _errorTaille,
+              ),
+              initialValue: _taille.toString(),
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return 'Merci de renseigner';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Il faut saisir un chiffre';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  var newState = int.tryParse(value);
+                  if (value.isEmpty) {
+                    _errorTaille = 'Merci de renseigner';
+                  } else if (newState == null) {
+                    _errorTaille = 'Il faut saisir un nombre';
+                  } else {
+                    _taille = newState;
+                    _errorTaille = null;
+                  }
+                });
+              },
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+            child: TextFormField(
+              decoration: InputDecoration(
+                label: const Text("Poids"),
+                suffix: const Text("kg"),
+                errorText: _errorPoids,
+              ),
+              initialValue: _poids.toString(),
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return 'Merci de renseigner';
+                }
+                if (double.tryParse(value) == null) {
+                  return 'Il faut saisir un nombre';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  var newState = double.tryParse(value);
+                  if (value.isEmpty) {
+                    _errorPoids = 'Merci de renseigner';
+                  } else if (newState == null) {
+                    _errorPoids = 'Il faut saisir un nombre';
+                  } else {
+                    _poids = newState;
+                    _errorPoids = null;
+                  }
+                });
+              },
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+            child: TextFormField(
+              decoration: InputDecoration(
+                label: const Text("Age"),
+                suffix: const Text("ans"),
+                errorText: _errorAge,
+              ),
+              initialValue: _age.toString(),
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return 'Merci de renseigner';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Il faut saisir un chiffre';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  var newState = int.tryParse(value);
+                  if (value.isEmpty) {
+                    _errorAge = 'Merci de renseigner';
+                  } else if (newState == null) {
+                    _errorAge = 'Il faut saisir un nombre';
+                  } else {
+                    _age = newState;
+                    _errorAge = null;
+                  }
+                });
+              },
+            ),
+          ),
+          const Padding(
+              padding: EdgeInsets.only(left: 36.0, right: 36.0, top: 20.0),
+              child: null),
+          ToggleButtons(
+            direction: Axis.horizontal,
+            onPressed: (int index) {
+              setState(() {
+                _homme = (index == 0);
+              });
+            },
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            constraints: const BoxConstraints(
+              minHeight: 40.0,
+              minWidth: 80.0,
+            ),
+            isSelected: [_homme, !_homme],
+            children: const <Widget>[
+              Text('Homme'),
+              Text('Femme'),
+            ],
+          ),
+          Padding(
+              padding:
+                  const EdgeInsets.only(left: 36.0, right: 36.0, top: 36.0),
+              child: Text(
+                "Activités intenses par semaine",
+                style: Theme.of(context).textTheme.titleSmall,
+              )),
+          Padding(
+            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+            child: Slider(
+              value: _activite,
+              max: 7,
+              divisions: 3,
+              label: _activite.round().toString(),
+              onChanged: (double value) {
+                setState(() {
+                  _activite = value;
+                });
+              },
+            ),
+          ),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "${calcKcal()} kcal",
+                style: Theme.of(context)
+                    .textTheme
+                    .displayMedium
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "Calories",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "${protByActivity().round().toString()} g",
+                style: Theme.of(context)
+                    .textTheme
+                    .displayMedium
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "Protéines",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "${glucides().round()} g",
+                style: Theme.of(context)
+                    .textTheme
+                    .displayMedium
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "Glucides",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "${_poids.round()} g",
+                style: Theme.of(context)
+                    .textTheme
+                    .displayMedium
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "Lipides",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: Colors.green),
+              )),
+          Padding(
+            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+            child: Slider(
+              value: _deficit,
+              max: 700,
+              activeColor: Colors.green,
+              onChanged: (double value) {
+                setState(() {
+                  _deficit = value;
+                });
+              },
+            ),
+          ),
+          Padding(
+              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+              child: Text(
+                "Déficit calorique",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(color: Colors.green),
+              )),
+        ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
