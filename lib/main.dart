@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:healthy/int_field.dart';
+import 'package:healthy/bool_field.dart';
+import 'package:healthy/double_field.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +53,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   int _taille = 0;
   double _poids = 0;
   int _age = 0;
@@ -58,10 +63,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final _varsHomme = [13.707, 492.3, 6.673, 77.607];
   final _varsFemme = [9.74, 172.9, 4.7373, 667.051];
-
-  String? _errorTaille;
-  String? _errorPoids;
-  String? _errorAge;
 
   double kcalByActivity() {
     if (_activite < 2) return 1.375;
@@ -90,156 +91,104 @@ class _MyHomePageState extends State<MyHomePage> {
     return result.round() - _deficit.round();
   }
 
+  void setActivite(double value) {
+    setState(() {
+      _activite = value;
+    });
+    _prefs.then((SharedPreferences prefs) {
+      prefs.setDouble('activite', value);
+    });
+  }
+
+  void setPoids(double value) {
+    setState(() {
+      _poids = value;
+    });
+    _prefs.then((SharedPreferences prefs) {
+      prefs.setDouble('poids', value);
+    });
+  }
+
+  void setTaille(int value) {
+    setState(() {
+      _taille = value;
+    });
+    _prefs.then((SharedPreferences prefs) {
+      prefs.setInt('taille', value);
+    });
+  }
+
+  void setAge(int value) {
+    setState(() {
+      _age = value;
+    });
+    _prefs.then((SharedPreferences prefs) {
+      prefs.setInt('age', value);
+    });
+  }
+
+  void setHomme(bool value) {
+    setState(() {
+      _homme = value;
+    });
+    _prefs.then((SharedPreferences prefs) {
+      prefs.setBool('homme', value);
+    });
+  }
+
+  Future<bool> getBoolPref(String name) =>
+      _prefs.then((SharedPreferences prefs) => prefs.getBool(name) ?? true);
+
+  Future<int> getIntPref(String name) =>
+      _prefs.then((SharedPreferences prefs) => prefs.getInt(name) ?? 0);
+
+  Future<double> getDoublePref(String name) =>
+      _prefs.then((SharedPreferences prefs) => prefs.getDouble(name) ?? 0);
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Column(
-        // Column is also a layout widget. It takes a list of children and
-        // arranges them vertically. By default, it sizes itself to fit its
-        // children horizontally, and tries to be as tall as its parent.
-        //
-        // Invoke "debug painting" (press "p" in the console, choose the
-        // "Toggle Debug Paint" action from the Flutter Inspector in Android
-        // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-        // to see the wireframe for each widget.
-        //
-        // Column has various properties to control how it sizes itself and
-        // how it positions its children. Here we use mainAxisAlignment to
-        // center the children vertically; the main axis here is the vertical
-        // axis because Columns are vertical (the cross axis would be
-        // horizontal).
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: TextFormField(
-              decoration: InputDecoration(
-                label: const Text("Taille"),
-                suffix: const Text("cm"),
-                errorText: _errorTaille,
-              ),
-              initialValue: _taille.toString(),
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return 'Merci de renseigner';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'Il faut saisir un chiffre';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  var newState = int.tryParse(value);
-                  if (value.isEmpty) {
-                    _errorTaille = 'Merci de renseigner';
-                  } else if (newState == null) {
-                    _errorTaille = 'Il faut saisir un nombre';
-                  } else {
-                    _taille = newState;
-                    _errorTaille = null;
-                  }
-                });
-              },
+            child: IntField(
+              initialValue: getIntPref("taille"),
+              label: "Taille",
+              suffix: "cm",
+              updateValue: (value) => setTaille(value),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: TextFormField(
-              decoration: InputDecoration(
-                label: const Text("Poids"),
-                suffix: const Text("kg"),
-                errorText: _errorPoids,
-              ),
-              initialValue: _poids.toString(),
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return 'Merci de renseigner';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Il faut saisir un nombre';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  var newState = double.tryParse(value);
-                  if (value.isEmpty) {
-                    _errorPoids = 'Merci de renseigner';
-                  } else if (newState == null) {
-                    _errorPoids = 'Il faut saisir un nombre';
-                  } else {
-                    _poids = newState;
-                    _errorPoids = null;
-                  }
-                });
-              },
+            child: DoubleField(
+              initialValue: getDoublePref("poids"),
+              label: "Poids",
+              suffix: "kg",
+              updateValue: (value) => setPoids(value),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: TextFormField(
-              decoration: InputDecoration(
-                label: const Text("Age"),
-                suffix: const Text("ans"),
-                errorText: _errorAge,
-              ),
-              initialValue: _age.toString(),
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return 'Merci de renseigner';
-                }
-                if (int.tryParse(value) == null) {
-                  return 'Il faut saisir un chiffre';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  var newState = int.tryParse(value);
-                  if (value.isEmpty) {
-                    _errorAge = 'Merci de renseigner';
-                  } else if (newState == null) {
-                    _errorAge = 'Il faut saisir un nombre';
-                  } else {
-                    _age = newState;
-                    _errorAge = null;
-                  }
-                });
-              },
+            child: IntField(
+              initialValue: getIntPref("age"),
+              label: "Âge",
+              suffix: "ans",
+              updateValue: (value) => setAge(value),
             ),
           ),
           const Padding(
               padding: EdgeInsets.only(left: 36.0, right: 36.0, top: 20.0),
               child: null),
-          ToggleButtons(
-            direction: Axis.horizontal,
-            onPressed: (int index) {
-              setState(() {
-                _homme = (index == 0);
-              });
-            },
-            borderRadius: const BorderRadius.all(Radius.circular(8)),
-            constraints: const BoxConstraints(
-              minHeight: 40.0,
-              minWidth: 80.0,
-            ),
-            isSelected: [_homme, !_homme],
-            children: const <Widget>[
-              Text('Homme'),
-              Text('Femme'),
-            ],
+          BoolField(
+            labelTrue: "Homme",
+            labelFalse: "Femme",
+            initialValue: getBoolPref("homme"),
+            updateValue: (value) => setHomme(value),
           ),
           Padding(
               padding:
