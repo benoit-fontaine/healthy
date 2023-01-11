@@ -1,39 +1,11 @@
 import 'package:flutter/material.dart';
 
-class DoubleField extends StatelessWidget {
-  final String label;
-  final String suffix;
-  final Future<double> initialValue;
-  final void Function(double value) updateValue;
-  const DoubleField({
-    super.key,
-    required this.label,
-    required this.initialValue,
-    required this.suffix,
-    required this.updateValue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: initialValue,
-      builder: (context, snapshot) => (snapshot.hasData)
-          ? DoubleFieldSF(
-              label: label,
-              initialValue: snapshot.data ?? 0,
-              suffix: suffix,
-              updateValue: updateValue)
-          : Container(),
-    );
-  }
-}
-
-class DoubleFieldSF extends StatefulWidget {
+class DoubleField extends StatefulWidget {
   final String label;
   final String suffix;
   final double initialValue;
   final void Function(double value) updateValue;
-  const DoubleFieldSF({
+  const DoubleField({
     Key? key,
     required this.label,
     required this.initialValue,
@@ -42,20 +14,28 @@ class DoubleFieldSF extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<DoubleFieldSF> createState() => _DoubleFieldSFState();
+  State<DoubleField> createState() => _DoubleFieldState();
 }
 
-class _DoubleFieldSFState extends State<DoubleFieldSF> {
+class _DoubleFieldState extends State<DoubleField> {
   String? _errorText;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       decoration: InputDecoration(
-        label: Text(widget.label),
-        suffix: Text(widget.suffix),
+        label: Text(
+          widget.label,
+          style: const TextStyle(color: Colors.white),
+        ),
+        suffix: Text(
+          widget.suffix,
+          style: const TextStyle(color: Colors.white),
+        ),
         errorText: _errorText,
       ),
+      style: const TextStyle(color: Colors.white),
+      textAlign: TextAlign.center,
       initialValue: "${widget.initialValue}",
       validator: (String? value) {
         if (value == null || value.isEmpty) {

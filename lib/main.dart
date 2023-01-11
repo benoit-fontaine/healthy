@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:healthy/int_field.dart';
-import 'package:healthy/bool_field.dart';
-import 'package:healthy/double_field.dart';
+import 'package:healthy/edit_form.dart';
+import 'package:healthy/model/health_imput.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -54,258 +53,228 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  int _taille = 0;
+  double _deficit = 0;
+  double _activite = 0;
   double _poids = 0;
   int _age = 0;
-  double _activite = 0;
-  bool _homme = true;
-  double _deficit = 0;
+  int _taille = 0;
+  bool _estUnHomme = true;
 
   final _varsHomme = [13.707, 492.3, 6.673, 77.607];
   final _varsFemme = [9.74, 172.9, 4.7373, 667.051];
 
-  double kcalByActivity() {
+  double getLipides() => _poids;
+
+  double getFacteurActivite() {
     if (_activite < 2) return 1.375;
     if (_activite < 4) return 1.56;
     if (_activite < 7) return 1.64;
     return 1.82;
   }
 
-  double protByActivity() {
+  double getProteines() {
     if (_activite < 2) return 0.8 * _poids;
     if (_activite < 4) return 1.6 * _poids;
     return 2 * _poids;
   }
 
-  double glucides() {
-    return (calcKcal() - (protByActivity() * 4) - (_poids * 9)) / 4;
+  double getGlucides() => (getCKal() - (getProteines() * 4) - (_poids * 9)) / 4;
+
+  double getCKal() {
+    double cKal = 0;
+    var vars = _estUnHomme ? _varsHomme : _varsFemme;
+    cKal += vars[0] * _poids;
+    cKal += vars[1] * (_taille / 100);
+    cKal += vars[2] * _age;
+    cKal += vars[3] * getFacteurActivite();
+    cKal = cKal - _deficit.round();
+    return cKal;
   }
 
-  int calcKcal() {
-    double result = 0;
-    var vars = _homme ? _varsHomme : _varsFemme;
-    result += vars[0] * _poids;
-    result += vars[1] * (_taille / 100);
-    result += vars[2] * _age;
-    result += vars[3] * kcalByActivity();
-    return result.round() - _deficit.round();
-  }
-
-  void setActivite(double value) {
+  Future<HealthInput> getPrefs() async {
+    HealthInput result = await _prefs.then(
+      (pref) => pref.reload().then(
+            (value) => HealthInput(
+              activite: pref.getDouble(SharedLabel.activite) ?? 0,
+              age: pref.getInt(SharedLabel.age) ?? 0,
+              estHomme: pref.getBool(SharedLabel.estUnHomme) ?? true,
+              poids: pref.getDouble(SharedLabel.poids) ?? 0,
+              taille: pref.getInt(SharedLabel.taille) ?? 0,
+            ),
+          ),
+    );
     setState(() {
-      _activite = value;
+      _activite = result.activite;
+      _age = result.age;
+      _estUnHomme = result.estHomme;
+      _poids = result.poids;
+      _taille = result.taille;
     });
-    _prefs.then((SharedPreferences prefs) {
-      prefs.setDouble('activite', value);
-    });
+    return result;
   }
 
-  void setPoids(double value) {
-    setState(() {
-      _poids = value;
-    });
-    _prefs.then((SharedPreferences prefs) {
-      prefs.setDouble('poids', value);
-    });
+  void setPref(String prefLabel, HealthInput input) async {
+    SharedPreferences pref = await _prefs;
+    if (prefLabel == SharedLabel.activite) {
+      pref.setDouble(
+        prefLabel,
+        input.activite,
+      );
+      setState(() {
+        _activite = input.activite;
+      });
+    }
+    if (prefLabel == SharedLabel.age) {
+      pref.setInt(
+        prefLabel,
+        input.age,
+      );
+      setState(() {
+        _age = input.age;
+      });
+    }
+    if (prefLabel == SharedLabel.poids) {
+      pref.setDouble(
+        prefLabel,
+        input.poids,
+      );
+      setState(() {
+        _poids = input.poids;
+      });
+    }
+    if (prefLabel == SharedLabel.taille) {
+      pref.setInt(
+        prefLabel,
+        input.taille,
+      );
+      setState(() {
+        _taille = input.taille;
+      });
+    }
+    if (prefLabel == SharedLabel.estUnHomme) {
+      pref.setBool(
+        prefLabel,
+        input.estHomme,
+      );
+      _estUnHomme = input.estHomme;
+    }
   }
-
-  void setTaille(int value) {
-    setState(() {
-      _taille = value;
-    });
-    _prefs.then((SharedPreferences prefs) {
-      prefs.setInt('taille', value);
-    });
-  }
-
-  void setAge(int value) {
-    setState(() {
-      _age = value;
-    });
-    _prefs.then((SharedPreferences prefs) {
-      prefs.setInt('age', value);
-    });
-  }
-
-  void setHomme(bool value) {
-    setState(() {
-      _homme = value;
-    });
-    _prefs.then((SharedPreferences prefs) {
-      prefs.setBool('homme', value);
-    });
-  }
-
-  Future<bool> getBoolPref(String name) =>
-      _prefs.then((SharedPreferences prefs) => prefs.getBool(name) ?? true);
-
-  Future<int> getIntPref(String name) =>
-      _prefs.then((SharedPreferences prefs) => prefs.getInt(name) ?? 0);
-
-  Future<double> getDoublePref(String name) =>
-      _prefs.then((SharedPreferences prefs) => prefs.getDouble(name) ?? 0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: IntField(
-              initialValue: getIntPref("taille"),
-              label: "Taille",
-              suffix: "cm",
-              updateValue: (value) => setTaille(value),
+      backgroundColor: Colors.blue,
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            EditForm(
+                title: widget.title,
+                healthInput: getPrefs(),
+                onChanged: setPref),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 20),
+                child: Column(children: [
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "${getCKal().round()} kcal",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "Calories",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "${getProteines().round().toString()} g",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "Protéines",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "${getGlucides().round()} g",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "Glucides",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "${getLipides().round()} g",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "Lipides",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.green),
+                      )),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                    child: Slider(
+                      value: _deficit,
+                      max: 700,
+                      activeColor: Colors.green,
+                      onChanged: (double value) {
+                        setState(() {
+                          _deficit = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(left: 36.0, right: 36.0),
+                      child: Text(
+                        "Déficit calorique",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.green),
+                      )),
+                ]),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: DoubleField(
-              initialValue: getDoublePref("poids"),
-              label: "Poids",
-              suffix: "kg",
-              updateValue: (value) => setPoids(value),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: IntField(
-              initialValue: getIntPref("age"),
-              label: "Âge",
-              suffix: "ans",
-              updateValue: (value) => setAge(value),
-            ),
-          ),
-          const Padding(
-              padding: EdgeInsets.only(left: 36.0, right: 36.0, top: 20.0),
-              child: null),
-          BoolField(
-            labelTrue: "Homme",
-            labelFalse: "Femme",
-            initialValue: getBoolPref("homme"),
-            updateValue: (value) => setHomme(value),
-          ),
-          Padding(
-              padding:
-                  const EdgeInsets.only(left: 36.0, right: 36.0, top: 36.0),
-              child: Text(
-                "Activités intenses par semaine",
-                style: Theme.of(context).textTheme.titleSmall,
-              )),
-          Padding(
-            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: Slider(
-              value: _activite,
-              max: 7,
-              divisions: 3,
-              label: _activite.round().toString(),
-              onChanged: (double value) {
-                setState(() {
-                  _activite = value;
-                });
-              },
-            ),
-          ),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "${calcKcal()} kcal",
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "Calories",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "${protByActivity().round().toString()} g",
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "Protéines",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "${glucides().round()} g",
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "Glucides",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "${_poids.round()} g",
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "Lipides",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.green),
-              )),
-          Padding(
-            padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-            child: Slider(
-              value: _deficit,
-              max: 700,
-              activeColor: Colors.green,
-              onChanged: (double value) {
-                setState(() {
-                  _deficit = value;
-                });
-              },
-            ),
-          ),
-          Padding(
-              padding: const EdgeInsets.only(left: 36.0, right: 36.0),
-              child: Text(
-                "Déficit calorique",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.green),
-              )),
-        ],
+          ],
+        ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

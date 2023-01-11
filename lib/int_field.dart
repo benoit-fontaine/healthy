@@ -2,40 +2,12 @@
 
 import 'package:flutter/material.dart';
 
-class IntField extends StatelessWidget {
-  final String label;
-  final String suffix;
-  final Future<int> initialValue;
-  final void Function(int value) updateValue;
-  const IntField({
-    super.key,
-    required this.label,
-    required this.initialValue,
-    required this.suffix,
-    required this.updateValue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: initialValue,
-      builder: (context, snapshot) => (snapshot.hasData)
-          ? IntFieldSF(
-              label: label,
-              initialValue: snapshot.data ?? 0,
-              suffix: suffix,
-              updateValue: updateValue)
-          : Container(),
-    );
-  }
-}
-
-class IntFieldSF extends StatefulWidget {
+class IntField extends StatefulWidget {
   final String label;
   final String suffix;
   final int initialValue;
   final void Function(int value) updateValue;
-  const IntFieldSF({
+  const IntField({
     Key? key,
     required this.label,
     required this.initialValue,
@@ -44,20 +16,28 @@ class IntFieldSF extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<IntFieldSF> createState() => _IntFieldSFState();
+  State<IntField> createState() => _IntFieldState();
 }
 
-class _IntFieldSFState extends State<IntFieldSF> {
+class _IntFieldState extends State<IntField> {
   String? _errorText;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       decoration: InputDecoration(
-        label: Text(widget.label),
-        suffix: Text(widget.suffix),
+        label: Text(
+          widget.label,
+          style: const TextStyle(color: Colors.white),
+        ),
+        suffix: Text(
+          widget.suffix,
+          style: const TextStyle(color: Colors.white),
+        ),
         errorText: _errorText,
       ),
+      style: const TextStyle(color: Colors.white),
+      textAlign: TextAlign.center,
       initialValue: "${widget.initialValue}",
       validator: (String? value) {
         if (value == null || value.isEmpty) {
